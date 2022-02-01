@@ -1,40 +1,42 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using API.Data;
 using API.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using API.Repositories;
 using API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using API.DTOs;
+
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    
+    public class UsersController : BaseApiController
     {
         private readonly ILogger<UsersController> _logger;
         private readonly IUsers _usersRepo;
-        public UsersController(IUsers usersRepo,ILogger<UsersController> logger)
+        private readonly IMapper _mapper;
+        public UsersController(IUsers usersRepo, IMapper mapper,ILogger<UsersController> logger)
         {
             _logger = logger;
             _usersRepo  = usersRepo;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
         {
             var users = await _usersRepo.GetUsers();
-            return users.ToList();
+            var result = _mapper.Map<IEnumerable<UserDto>>(users);
+            return result.ToList();
         }
 
-         [HttpGet("{id}")]
-        public async Task<ActionResult<AppUser>> GetUsers(int id)
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDto>> GetUserById(int id)
         {
             var users = await _usersRepo.GetUserById(id);
-            return users;
+            var result = _mapper.Map<UserDto>(users);
+            return result;
         }
 
     }
